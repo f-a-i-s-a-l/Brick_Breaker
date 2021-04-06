@@ -1,0 +1,3 @@
+INDEX VERSION 1.131+E:\Java Files\Brick Break Game\.metadata\.plugins\org.eclipse.jdt.core
+2943686810.index
+1574843208.index

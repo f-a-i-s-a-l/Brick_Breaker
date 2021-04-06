@@ -1,0 +1,160 @@
+package brick_break;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class Gameplay extends JPanel implements KeyListener, ActionListener{
+	
+	// Flag to check if game is running; to ensure game doesn't start automatically
+	private boolean play = false;	
+	
+	private int score = 0; // Store score
+	
+	private int totalBricks = 21;	// Total bricks
+		
+	private Timer timer;			// The timer helps creating speed for ball
+	private int delay = 1;		// Delay will be used to adjust speed
+	
+	private int playerX = 310;		// 	Starting point of slider
+	private int ballPosX = (int) (Math.random()*500);		//	Starting position of ball in X
+	private int ballPosY = (int) (Math.random()*200) + 350;		//	Starting position of ball in Y
+	private int ballXDir = -1;		// 	Ball direction in X
+	private int ballYDir = -2;		// 	Ball direction in Y
+	
+	// Map Generator instance
+	private MapGenerator map;
+	Gameplay(){
+		map = new MapGenerator(3,7);
+		addKeyListener(this);
+		setFocusable(true);
+		setFocusTraversalKeysEnabled(false);
+		
+		timer = new Timer(delay, this);
+		timer.start();
+	}
+	
+	public void paint(Graphics g) {
+		// background
+		g.setColor(Color.black);
+		g.fillRect(1, 1, 692, 592);
+		
+		// draw the map
+		map.draw((Graphics2D)g);
+		
+		// borders
+		g.setColor(Color.red);
+		g.fillRect(0, 0, 3, 592);		// Left Border
+		g.fillRect(0, 0, 692, 3);		// Top Border
+		g.fillRect(684, 0, 3, 592);		// Right Border
+		
+		// The paddle
+		g.setColor(Color.green);
+		g.fillRect(playerX, 550, 100, 8);
+		
+		// The ball
+		g.setColor(Color.yellow);
+		g.fillOval(ballPosX, ballPosY, 20, 20);
+		
+		g.dispose();
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		timer.start();
+		// Add movement to the ball
+		if(play) {
+			// Changeing ball direction on hitting paddle
+			if(new Rectangle(ballPosX, ballPosY, 20, 20).intersects(new Rectangle(playerX, 550, 100, 8))) {
+				ballYDir = -ballYDir;
+			}
+			
+			// Adding score and remove bricks when hit by ball
+			A: for(int i=0 ; i<map.map.length ; i++) {
+				for(int j=0 ; j<map.map[0].length ; j++) {
+					if(map.map[i][j]>0) {	// i.e., if the brick is still there
+						// Get the position and dimensions of the brick
+						int brickX = j*map.brickwidth + 80;
+						int brickY = i*map.brickheight + 50;
+						int brickwidth = map.brickwidth;
+						int brickheight = map.brickheight;
+						
+						// Create rectangles to detect collision
+						Rectangle rect = new Rectangle(brickX, brickY, brickwidth, brickheight);
+						Rectangle ballRect = new Rectangle(ballPosX, ballPosY, 20, 20);
+						Rectangle brickRect = rect;
+						
+						// If rectangles collide:
+						if(ballRect.intersects(brickRect)) {
+							map.setBrickValue(0, i, j);		// Set the brick value to 0
+							totalBricks--;		// Brick count reduced by 1
+							score+=5;			// 5 points added to score
+							
+							// Add recoil collision for breaking the brick
+							if(ballPosX + 19 <= brickRect.x || ballPosX +1 >= brickRect.x + brickRect.width) {
+								ballXDir = -ballXDir;
+							} else {
+								ballYDir = -ballYDir;
+							}
+							
+							// Break out of the entire loop once the brick is removed
+							break A;
+						}
+					}
+						
+				}
+			}
+			
+			ballPosX += ballXDir;
+			ballPosY += ballYDir;
+			
+			// Add wall collision effect
+			if(ballPosX < 0)
+				ballXDir = -ballXDir;
+			if(ballPosY < 0)
+				ballYDir = -ballYDir;
+			if(ballPosX > 670)
+				ballXDir = -ballXDir;
+		}
+		repaint();	
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
+			if(playerX >= 580) {
+				playerX = 580;
+			}else {
+				moveRight();
+			}
+		}
+		if(e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
+			if(playerX <= 10) {
+				playerX = 10;
+			}else {
+				moveLeft();
+			}
+		}
+	}
+	
+	// Method to move right
+	public void moveRight() {
+		play = true;
+		playerX += 20;
+	}
+	
+	// Method to move left
+	public void moveLeft() {
+		play = true;
+		playerX -= 20;
+	}
+	
+	// keyTyped() and keyReleased are not required
+	@Override
+	public void keyTyped(KeyEvent e) {}
+	@Override
+	public void keyReleased(KeyEvent e) {}
+
+
+
+}
